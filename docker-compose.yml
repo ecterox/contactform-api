@@ -1,0 +1,67 @@
+services:
+    db:
+        image: mysql
+        ports:
+            - "3306:3306"
+        volumes:
+            - "db_volume:/var/lib/mysql"
+        environment:
+            MYSQL_ROOT_PASSWORD: "root"
+            MYSQL_DATABASE: "database"
+            MYSQL_USER: "user"
+            MYSQL_PASSWORD: "root"
+        networks:
+            - web
+    php:
+        build:
+            context: .
+            dockerfile: dockerfile
+        ports:
+            - "80:80"
+            - "22:22"
+        volumes:
+            - ".:/var/www/html"
+            - "./default.conf:/etc/apache2/sites-available/000-default.conf"
+            - symfony_var:/var/www/html/var
+            - composer_vendor:/var/www/html/vendor
+            - composer_cache:/root/.composer/cache
+            - symfony_migrations:/var/www/html/migrations
+            - "./lib:/var/www/lib"
+        environment:
+            - XDEBUG_ENABLED=0
+            - PHP_VERSION=8.2
+        networks:
+            - web
+
+###> doctrine/doctrine-bundle ###
+  database:
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-!ChangeMe!}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${POSTGRES_DB:-app}", "-U", "${POSTGRES_USER:-app}"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+      # You may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./docker/db/data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
+volumes:
+    symfony_var:
+    symfony_migrations:
+    composer_vendor:
+    composer_cache:
+    db_volume:
+
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
+        driver: local
+networks:
+    web:
+        external: false
