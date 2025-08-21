@@ -3,39 +3,50 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\ContactMessage;
+
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class ContactController extends AbstractController
 {
     #[Route(
         '/api/contact',
         name: 'new_contact_message',
+        methods: ['POST'],
         priority: 0
     )]
-    public function newContactMessage(EntityManagerInterface $entityManager, Request $request): Response
+    public function newContactMessage(ValidatorInterface $validator,
+        EntityManagerInterface $entityManager, Request $request): Response
     {
-        $contactmessage = new ContactMessage();
-        $contactmessage->setName('Max Mustermann');
-        $contactmessage->setPhonenumber('01234567890');
-        $contactmessage->setEmail('max@mustermann.de');
-        $contactmessage->setTopic('Konto');
-        $contactmessage->setMessage('Dies ist eine Testnachricht!');
+        $json = $request->getContent();
+        $data = json_decode($json, true);
 
-        // Tells doctrine that we eventually want to save this contact message
-        $entityManager->persist($contactmessage);
+        $contactMessage = new ContactMessage();
+        $contactMessage->setName($data['name']);
+        $contactMessage->setPhonenumber($data['phone']);
+        $contactMessage->setEmail($data['email']);
+        $contactMessage->setTopic($data['topic']);
+        $contactMessage->setMessage($data['message']);
+        $contactMessage->setTimestamp(new \DateTime());
 
-        // Executes the queries
-        $entityManager->flush();
+        $violations = $validator->validate($contactMessage);
+        if (!$violations->count()) {
+            // Tells doctrine that we eventually want to save this contact message
+            $entityManager->persist($contactMessage);
 
-        $data = json_decode($request->getContent(), true);
+            // Executes the queries
+            $entityManager->flush();
+        }
 
         return new Response(
-            //'Inserted at: '.$contactmessage->getId(),
-            $data,
+            //'Inserted at: '.$contactMessage->getId(),
+            $json,
             Response::HTTP_OK,
             [
                 'content-type' => 'application/json',

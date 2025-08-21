@@ -32,7 +32,7 @@ RUN pecl install xdebug && docker-php-ext-enable xdebug
 # ✅ Composer von offizieller Composer-Image-Version übernehmen
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-RUN composer install --prefer-dist --no-interaction
+#RUN composer install --prefer-dist --no-interaction
 
 ## entrypoint.sh ins Image kopieren und ausführbar machen
 #COPY api/entrypoint.sh /entrypoint.sh
