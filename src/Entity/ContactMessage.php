@@ -16,24 +16,33 @@ class ContactMessage
     #[ORM\Column]
     private ?int $id = null;
 
+    #[ORM\Column(length: 255)]
+    private ?string $title = null;
+
     #[Assert\NotBlank]
     #[Assert\Regex(
-        pattern: "/^[A-Za-zÄÖÜäöüß]+ [A-Za-zÄÖÜäöüß]+$/u"
+        pattern: "/^\p{L}+([-' ]\p{L}+)*$/"
     )]
     #[ORM\Column(length: 255)]
-    private ?string $Name = null;
+    private ?string $firstName = null;
 
+    #[Assert\NotBlank]
     #[Assert\Regex(
-        pattern: "/^\+?[0-9\s\-]{7,15}$/"
+        pattern: "/^\p{L}+([-' ]\p{L}+)*$/"
     )]
     #[ORM\Column(length: 255)]
-    private ?string $phonenumber = null;
+    private ?string $lastName = null;
 
     #[Assert\NotBlank]
     #[Assert\Email]
     #[ORM\Column(length: 255)]
     private ?string $email = null;
 
+    #[Assert\Regex(
+        pattern: "/^\+?[0-9\s\-]{7,15}$/"
+    )]
+    #[ORM\Column(length: 255)]
+    private ?string $phonenumber = null;
 
     #[Assert\Length(min: 1, max: 30)]
     #[ORM\Column(length: 255)]
@@ -51,26 +60,38 @@ class ContactMessage
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getTitle(): ?string
     {
-        return $this->Name;
+        return $this->title;
     }
 
-    public function setName(string $Name): static
+    public function setTitle(string $title): static
     {
-        $this->Name = $Name;
+        $this->title = $title;
 
         return $this;
     }
 
-    public function getPhonenumber(): ?string
+    public function getFirstName(): ?string
     {
-        return $this->phonenumber;
+        return $this->firstName;
     }
 
-    public function setPhonenumber(string $phonenumber): static
+    public function setFirstName(string $firstName): static
     {
-        $this->phonenumber = $phonenumber;
+        $this->firstName = $firstName;
+
+        return $this;
+    }
+
+    public function getLastName(): ?string
+    {
+        return $this->lastName;
+    }
+
+    public function setLastName(string $lastName): static
+    {
+        $this->lastName = $lastName;
 
         return $this;
     }
@@ -83,6 +104,18 @@ class ContactMessage
     public function setEmail(string $email): static
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getPhonenumber(): ?string
+    {
+        return $this->phonenumber;
+    }
+
+    public function setPhonenumber(string $phonenumber): static
+    {
+        $this->phonenumber = $phonenumber;
 
         return $this;
     }
@@ -123,15 +156,4 @@ class ContactMessage
         return $this;
     }
 
-    public function getTest(): ?\DateTime
-    {
-        return $this->test;
-    }
-
-    public function setTest(\DateTime $test): static
-    {
-        $this->test = $test;
-
-        return $this;
-    }
 }
