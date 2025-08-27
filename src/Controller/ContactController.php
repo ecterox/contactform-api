@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Repository\ContactTitleRepository;
+use App\Repository\ContactTopicRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,12 +19,16 @@ final class ContactController extends AbstractController
 {
     #[Route(
         '/api/contact',
-        name: 'new_contact_message',
+        name: 'create_contact_message',
         methods: ['POST'],
         priority: 0
     )]
-    public function newContactMessage(ValidatorInterface $validator,
-        EntityManagerInterface $entityManager, Request $request): Response
+    public function createContactMessage(
+        ValidatorInterface $validator,
+        EntityManagerInterface $entityManager,
+        ContactTopicRepository $contactTopicRepository,
+        ContactTitleRepository $contactTitleRepository,
+        Request $request): Response
     {
         $headers = ['content-type' => 'application/json',
                    'Access-Control-Allow-Origin' => '*'];
@@ -43,17 +49,25 @@ final class ContactController extends AbstractController
             );
         }
 
+        $title = $contactTitleRepository->findOneBy(['title_name' => $data['title']]);
+        $topic = $contactTopicRepository->findOneBy(['topic_name' => $data['topic']]);
+        if (!$title || !$topic) {
+            return new Response(
+                json_encode(['Error' => 'Invalid title / topic']),
+                Response::HTTP_BAD_REQUEST,
+                $headers
+            );
+        }
+
         // Create new entity and fill in the data
         $contactMessage = new ContactMessage();
-        $contactMessage->setTitle($data['title']);
-
+        $contactMessage->setTitle($title->getId());
         $str = explode(" ", $data['name']);
         $contactMessage->setFirstName(($str[0]));
         $contactMessage->setLastName(($str[1]));
-
         $contactMessage->setEmail($data['email']);
         $contactMessage->setPhonenumber($data['phone']);
-        $contactMessage->setTopic($data['topic']);
+        $contactMessage->setTopic($topic->getId());
         $contactMessage->setMessage($data['message']);
         $contactMessage->setTimestamp(new \DateTime());
 
@@ -87,10 +101,32 @@ final class ContactController extends AbstractController
         methods: ['GET'],
         priority: 0
     )]
-    public function getContactTopics(EntityManagerInterface $entityManager): Response
+    public function getContactTopics(ContactTopicRepository $contactTopicRepository): Response
     {
+        $topics = $contactTopicRepository->findAll();
+        $topicNames = array_map(fn($topic) => $topic->getTopicName(), $topics);
+
         return new Response(
-            json_encode(['topics' => ['Allgemein', 'Konto', 'Bestellung', 'Zahlung', 'Sonstiges']]),
+            json_encode($topicNames),
+            Response::HTTP_OK,
+            ['content-type' => 'application/json',
+             'Access-Control-Allow-Origin' => '*']
+        );
+    }
+
+    #[Route(
+        '/api/contact/titles',
+        name: 'get_contact_titles',
+        methods: ['GET'],
+        priority: 0
+    )]
+    public function getContactTitles(ContactTitleRepository $contactTitleRepository): Response
+    {
+        $titles = $contactTitleRepository->findAll();
+        $titleNames = array_map(fn($title) => $title->getTitleName(), $titles);
+
+        return new Response(
+            json_encode($titleNames),
             Response::HTTP_OK,
             ['content-type' => 'application/json',
              'Access-Control-Allow-Origin' => '*']

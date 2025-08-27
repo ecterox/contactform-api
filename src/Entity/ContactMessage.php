@@ -16,8 +16,8 @@ class ContactMessage
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $title = null;
+    #[ORM\Column]
+    private ?int $title = null;
 
     #[Assert\NotBlank]
     #[Assert\Regex(
@@ -44,9 +44,8 @@ class ContactMessage
     #[ORM\Column(length: 255)]
     private ?string $phonenumber = null;
 
-    #[Assert\Length(min: 1, max: 30)]
-    #[ORM\Column(length: 255)]
-    private ?string $topic = null;
+    #[ORM\Column]
+    private ?int $topic = null;
 
     #[Assert\Length(min: 50, max: 1024)]
     #[ORM\Column(type: Types::TEXT)]
@@ -60,12 +59,12 @@ class ContactMessage
         return $this->id;
     }
 
-    public function getTitle(): ?string
+    public function getTitle(): ?int
     {
         return $this->title;
     }
 
-    public function setTitle(string $title): static
+    public function setTitle(int $title): static
     {
         $this->title = $title;
 
@@ -120,12 +119,12 @@ class ContactMessage
         return $this;
     }
 
-    public function getTopic(): ?string
+    public function getTopic(): ?int
     {
         return $this->topic;
     }
 
-    public function setTopic(string $topic): static
+    public function setTopic(int $topic): static
     {
         $this->topic = $topic;
 
