@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\ContactTitleRepository;
 use App\Repository\ContactTopicRepository;
+use mysql_xdevapi\Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 use Symfony\Component\Routing\Annotation\Route;
@@ -49,11 +50,16 @@ final class ContactController extends AbstractController
             );
         }
 
-        $title = $contactTitleRepository->findOneBy(['title_name' => $data['title']]);
-        $topic = $contactTopicRepository->findOneBy(['topic_name' => $data['topic']]);
-        if (!$title || !$topic) {
+        try {
+            $title = $contactTitleRepository->findOneBy(
+                ['titleName' => $data['title']]
+            );
+            $topic = $contactTopicRepository->findOneBy(
+                ['topicName' => $data['topic']]
+            );
+        } catch(\Exception $e) {
             return new Response(
-                json_encode(['Error' => 'Invalid title / topic']),
+                json_encode(['Error' => $e->getMessage()]),
                 Response::HTTP_BAD_REQUEST,
                 $headers
             );
