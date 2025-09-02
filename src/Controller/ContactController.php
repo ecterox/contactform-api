@@ -4,7 +4,7 @@ namespace App\Controller;
 
 use App\Repository\ContactTitleRepository;
 use App\Repository\ContactTopicRepository;
-use mysql_xdevapi\Exception;
+
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 use Symfony\Component\Routing\Annotation\Route;
@@ -42,35 +42,91 @@ final class ContactController extends AbstractController
         $keysToCheck = ['title', 'name', 'email', 'phone', 'topic', 'message'];
         $missingFields = array_diff($keysToCheck, array_keys($data));
 
-        if ($missingFields) {
+        try {
+            if ($missingFields) {
+                throw new \RuntimeException(json_encode(['missingFields' => $missingFields]));
+            }
+
+            $title = $contactTitleRepository->findOneBy(
+                ['titleName' => $data['title']]
+            );
+
+            if (!$title) {
+                throw new \RuntimeException('Title not found.');
+            }
+
+            $topic = $contactTopicRepository->findOneBy(
+                ['topicName' => $data['topic']]
+            );
+
+            if (!$topic) {
+                throw new \RuntimeException('Topic not found.');
+            }
+        } catch (\Doctrine\DBAL\Exception $e) {
             return new Response(
-                json_encode(['missingFields' => $missingFields]),
-                Response::HTTP_BAD_REQUEST,
+                $e->getMessage(),
+                Response::HTTP_NOT_FOUND,
                 $headers
             );
         }
 
-        try {
-            $title = $contactTitleRepository->findOneBy(
-                ['titleName' => $data['title']]
-            );
-            $topic = $contactTopicRepository->findOneBy(
-                ['topicName' => $data['topic']]
-            );
-        } catch(\Exception $e) {
+        /*$title = $contactTitleRepository->findOneBy(
+            ['titleName' => $data['title']]
+        );
+        $topic = $contactTopicRepository->findOneBy(
+            ['topicName' => $data['topic']]
+        );
+
+        if (!$title || !$topic) {
             return new Response(
-                json_encode(['Error' => $e->getMessage()]),
+                'Title or topic not found',
                 Response::HTTP_BAD_REQUEST,
                 $headers
             );
-        }
+        }*/
 
         // Create new entity and fill in the data
         $contactMessage = new ContactMessage();
         $contactMessage->setTitle($title->getId());
+
         $str = explode(" ", $data['name']);
         $contactMessage->setFirstName(($str[0]));
         $contactMessage->setLastName(($str[1]));
+
+        $contactMessage->setEmail($data['email']);
+        $contactMessage->setPhonenumber($data['phone']);
+        $contactMessage->setTopic($topic->getId());
+        $contactMessage->setMessage($data['message']);
+        $contactMessage->setTimestamp(new \DateTime());
+
+        // Validate entity's data
+        $violations = $validator->validate($contactMessage);
+
+        try {
+            if ($violations->count()) {
+                throw new \RuntimeException(json_encode(['violations' => $violations]));
+            }
+
+            // Tells doctrine that we eventually want to save this contact message
+            $entityManager->persist($contactMessage);
+
+            // Executes the queries
+            $entityManager->flush();
+        } catch (\Doctrine\DBAL\Exception $e) {
+            return new Response(
+                $e->getMessage(),
+                Response::HTTP_BAD_REQUEST,
+                $headers
+            );
+        }
+        // Create new entity and fill in the data
+        /*$contactMessage = new ContactMessage();
+        $contactMessage->setTitle($title->getId());
+
+        $str = explode(" ", $data['name']);
+        $contactMessage->setFirstName(($str[0]));
+        $contactMessage->setLastName(($str[1]));
+
         $contactMessage->setEmail($data['email']);
         $contactMessage->setPhonenumber($data['phone']);
         $contactMessage->setTopic($topic->getId());
@@ -91,7 +147,7 @@ final class ContactController extends AbstractController
         $entityManager->persist($contactMessage);
 
         // Executes the queries
-        $entityManager->flush();
+        $entityManager->flush();*/
 
         return new Response(
             //'Inserted at: '.$contactMessage->getId(),
