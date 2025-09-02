@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Repository\ContactMessageRepository;
 use App\Repository\ContactTitleRepository;
 use App\Repository\ContactTopicRepository;
 
@@ -165,11 +166,11 @@ final class ContactController extends AbstractController
     )]
     public function getContactTopics(ContactTopicRepository $contactTopicRepository): Response
     {
-        $topics = $contactTopicRepository->findAll();
-        $topicNames = array_map(fn($topic) => $topic->getTopicName(), $topics);
+        $topicEntities = $contactTopicRepository->findAll();
+        $topicArray = array_map(fn($topicEntity) => $topicEntity->getTopicName(), $topicEntities);
 
         return new Response(
-            json_encode($topicNames),
+            json_encode($topicArray),
             Response::HTTP_OK,
             ['content-type' => 'application/json',
              'Access-Control-Allow-Origin' => '*']
@@ -184,14 +185,33 @@ final class ContactController extends AbstractController
     )]
     public function getContactTitles(ContactTitleRepository $contactTitleRepository): Response
     {
-        $titles = $contactTitleRepository->findAll();
-        $titleNames = array_map(fn($title) => $title->getTitleName(), $titles);
+        $titleEntities = $contactTitleRepository->findAll();
+        $titleArray = array_map(fn($titleEntity) => $titleEntity->getTitleName(), $titleEntities);
 
         return new Response(
-            json_encode($titleNames),
+            json_encode($titleArray),
             Response::HTTP_OK,
             ['content-type' => 'application/json',
              'Access-Control-Allow-Origin' => '*']
+        );
+    }
+
+    #[Route(
+        '/api/contact/messages',
+        name: 'get_contact_messages',
+        methods: ['GET'],
+        priority: 0
+    )]
+    public function getContactMessages(ContactMessageRepository $contactMessageRepository): Response
+    {
+        $messageEntities = $contactMessageRepository->findAll();
+        $messageArray = array_map(fn($messageEntity) => $messageEntity->toArray(), $messageEntities);
+
+        return new Response(
+            json_encode($messageArray),
+            Response::HTTP_OK,
+            ['content-type' => 'application/json',
+                'Access-Control-Allow-Origin' => '*']
         );
     }
 }

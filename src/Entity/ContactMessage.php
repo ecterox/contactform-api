@@ -155,4 +155,19 @@ class ContactMessage
         return $this;
     }
 
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->getId(),
+            'title' => $this->getTitle(),
+            'first_name' => $this->getFirstName(),
+            'last_name' => $this->getLastName(),
+            'email' => $this->getEmail(),
+            'phonenumber' => $this->getPhonenumber(),
+            'topic' => $this->getTopic(),
+            'message' => $this->getMessage(),
+            'timestamp' => $this->getTimestamp()
+        ];
+    }
+
 }
