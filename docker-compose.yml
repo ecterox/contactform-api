@@ -1,18 +1,5 @@
 services:
-    db:
-        image: mysql
-        ports:
-            - "3306:3306"
-        volumes:
-            - "db_volume:/var/lib/mysql"
-        environment:
-            MYSQL_ROOT_PASSWORD: "root"
-            MYSQL_DATABASE: "database"
-            MYSQL_USER: "user"
-            MYSQL_PASSWORD: "root"
-        networks:
-            - web
-    php:
+    symfony:
         build:
             context: .
             dockerfile: dockerfile
@@ -32,6 +19,19 @@ services:
             - PHP_VERSION=8.2
         networks:
             - web
+    db:
+        image: mysql
+        ports:
+            - "3306:3306"
+        volumes:
+            - "db_volume:/var/lib/mysql"
+        environment:
+            MYSQL_ROOT_PASSWORD: "root"
+            MYSQL_DATABASE: "database"
+            MYSQL_USER: "user"
+            MYSQL_PASSWORD: "root"
+        networks:
+            - web
 volumes:
     symfony_var:
     symfony_migrations:
@@ -41,4 +41,5 @@ volumes:
         driver: local
 networks:
     web:
-        external: false
+        name: web
+        driver: bridge
